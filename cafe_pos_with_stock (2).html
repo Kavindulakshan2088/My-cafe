@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Café — POS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --amber:#BA7517;--amber-light:#FAEEDA;--amber-mid:#FAC775;--amber-dark:#854F0B;
+  --teal:#0F6E56;--teal-light:#E1F5EE;
+  --red:#A32D2D;--red-light:#FCEBEB;--green:#3B6D11;--green-light:#EAF3DE;
+  --bg:#FAFAF8;--surface:#FFFFFF;--border:#E8E5DE;--border-strong:#D0CCC2;
+  --text:#1C1A17;--text-muted:#6B6860;--text-hint:#A09D98;
+  --radius:10px;--radius-lg:14px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── LOGIN SCREEN ── */
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:0}
+.login-screen.hidden{display:none}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:360px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
+.login-logo{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);text-align:center;margin-bottom:4px}
+.login-logo span{color:var(--amber)}
+.login-sub{font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:28px}
+.staff-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.staff-card{border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;background:var(--bg)}
+.staff-card:hover{border-color:var(--amber-mid);background:var(--amber-light)}
+.staff-card.selected{border-color:var(--amber);background:var(--amber-light)}
+.staff-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;margin:0 auto 8px;font-weight:500}
+.staff-name{font-size:13px;font-weight:500;color:var(--text)}
+.staff-role{font-size:11px;color:var(--text-muted);margin-top:2px;text-transform:capitalize}
+.pin-section{margin-top:4px}
+.pin-label{font-size:12px;color:var(--text-muted);margin-bottom:8px;text-align:center}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin-bottom:14px}
+.pin-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .2s}
+.pin-dot.filled{background:var(--amber);border-color:var(--amber)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-key{padding:12px;font-size:16px;font-weight:500;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:var(--bg);color:var(--text);transition:all .15s;font-family:'DM Sans',sans-serif}
+.pin-key:hover{background:var(--amber-light);border-color:var(--amber-mid)}
+.pin-key:active{transform:scale(.95)}
+.pin-key.clear{font-size:12px;color:var(--text-muted)}
+.pin-key.enter{background:var(--amber);color:#fff;border-color:var(--amber);font-size:13px}
+.pin-key.enter:hover{background:var(--amber-dark)}
+.login-error{text-align:center;font-size:12px;color:var(--red);margin-top:10px;height:16px}
+.login-hint{font-size:11px;color:var(--text-hint);text-align:center;margin-top:16px}
+
+/* ── TOP HEADER ── */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.app-logo{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)}
+.app-logo span{color:var(--amber)}
+.header-nav{display:flex;gap:4px}
+.hn{padding:5px 12px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:transparent;color:var(--text-muted);transition:all .15s}
+.hn:hover{background:var(--amber-light);color:var(--amber);border-color:var(--amber-mid)}
+.hn.active{background:var(--amber-light);color:var(--amber);border-color:var(--amber-mid);font-weight:500}
+.header-right{display:flex;align-items:center;gap:8px}
+.date-badge{font-size:11px;color:var(--text-muted);background:var(--bg);padding:4px 10px;border-radius:20px;border:1px solid var(--border)}
+.staff-badge{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:20px;border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all .15s}
+.staff-badge:hover{border-color:var(--amber-mid);background:var(--amber-light)}
+.sb-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500}
+.sb-name{font-size:12px;color:var(--text);font-weight:500}
+.sb-role{font-size:10px;color:var(--text-muted)}
+.export-btn{padding:5px 12px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--amber-mid);border-radius:20px;cursor:pointer;background:var(--amber-light);color:var(--amber);font-weight:500;transition:all .15s}
+.export-btn:hover{background:var(--amber);color:#fff}
+.clear-btn{padding:5px 10px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:transparent;color:var(--text-muted)}
+.clear-btn:hover{border-color:#E24B4A;color:var(--red)}
+
+/* ── MAIN LAYOUT ── */
+.main{display:flex;flex:1;overflow:hidden}
+.left{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.cat-row{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;flex-shrink:0}
+.cb{padding:4px 11px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:transparent;color:var(--text-muted);transition:all .15s}
+.cb:hover{background:var(--amber-light);color:var(--amber)}
+.cb.active{background:var(--amber-light);color:var(--amber);border-color:var(--amber-mid);font-weight:500}
+.search-row{padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.search-row input{width:100%;padding:7px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;transition:border .15s}
+.search-row input:focus{border-color:var(--amber-mid)}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px;padding:12px;overflow-y:auto;flex:1}
+.mi{border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px;cursor:pointer;background:var(--surface);transition:all .15s;display:flex;flex-direction:column;gap:4px}
+.mi:hover{border-color:var(--amber-mid);background:var(--amber-light);transform:translateY(-1px)}
+.mi:active{transform:scale(.97)}
+.mi-em{font-size:20px;line-height:1}
+.mi-name{font-size:12px;font-weight:500;color:var(--text)}
+.mi-price{font-size:11px;color:var(--amber);font-weight:500}
+.mi-cat{font-size:10px;color:var(--text-hint)}
+
+/* ── SUMMARY ── */
+.summary-view{flex:1;overflow-y:auto;padding:18px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px}
+.stat-label{font-size:10px;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:20px;font-weight:500;color:var(--text);font-family:'DM Serif Display',serif}
+.stat-sub{font-size:10px;color:var(--text-hint);margin-top:2px}
+.section-hdr{font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:4px}
+.top-items{margin-bottom:20px}
+.top-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.top-item:last-child{border-bottom:none}
+.ti-name{font-size:12px;color:var(--text);min-width:130px}
+.ti-bar-wrap{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.ti-bar{height:100%;background:var(--amber);border-radius:3px}
+.ti-qty{font-size:11px;color:var(--text-muted);min-width:28px;text-align:right}
+.ti-rev{font-size:11px;color:var(--amber);min-width:80px;text-align:right;font-weight:500}
+.order-hist{display:flex;flex-direction:column;gap:5px;margin-bottom:20px}
+.hist-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .15s}
+.hist-item:hover{border-color:var(--amber-mid);background:var(--amber-light)}
+.hi-info{flex:1;min-width:0}
+.hi-num{font-size:12px;font-weight:500;color:var(--text)}
+.hi-detail{font-size:11px;color:var(--text-muted)}
+.hi-amt{font-size:13px;font-weight:500;color:var(--amber)}
+.hi-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--green-light);color:var(--green);font-weight:500}
+.hi-staff{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--text-muted)}
+.no-data{font-size:12px;color:var(--text-hint);padding:10px 0}
+
+/* Staff shift table */
+.shift-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:12px;margin-bottom:20px}
+.shift-table th{background:var(--bg);text-align:left;padding:8px 12px;font-weight:500;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.shift-table td{padding:9px 12px;border-top:1px solid var(--border);color:var(--text)}
+.shift-table tr:first-child td{border-top:none}
+.role-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500}
+.role-manager{background:#EDE9FA;color:#5B21B6}
+.role-cashier{background:var(--teal-light);color:var(--teal)}
+
+/* ── RECEIPT ── */
+.receipt-view{flex:1;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px;background:var(--bg)}
+.receipt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;max-width:290px;width:100%;font-family:'DM Mono',monospace}
+.r-shop{text-align:center;font-size:15px;font-weight:500;color:var(--text);margin-bottom:2px;font-family:'DM Serif Display',serif}
+.r-sub{text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:12px}
+.r-divider{border:none;border-top:1px dashed var(--border-strong);margin:8px 0}
+.r-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text);padding:2px 0}
+.r-row.muted{color:var(--text-muted)}
+.r-row.total{font-size:13px;font-weight:500;border-top:1px solid var(--border-strong);margin-top:5px;padding-top:7px}
+.r-thanks{text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px}
+.r-actions{display:flex;gap:5px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+.r-actions button{padding:6px 12px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:transparent;color:var(--text);transition:all .15s}
+.r-actions button:hover{background:var(--bg)}
+.r-actions .print-btn{background:var(--amber);color:#fff;border-color:var(--amber)}
+.r-actions .print-btn:hover{background:var(--amber-dark)}
+
+/* ── RIGHT PANEL ── */
+.right{width:330px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid var(--border);background:var(--surface)}
+.cart-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.cart-hdr span{font-size:13px;font-weight:500;color:var(--text)}
+.o-num{font-size:11px;color:var(--text-muted);background:var(--bg);padding:2px 7px;border-radius:20px;border:1px solid var(--border)}
+.cart-list{flex:1;overflow-y:auto;padding:8px}
+.cart-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-price{font-size:11px;color:var(--text-muted)}
+.qty-ctrl{display:flex;align-items:center;gap:3px}
+.qb{width:20px;height:20px;border:1px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--text);line-height:1;font-family:'DM Sans',sans-serif}
+.qb:hover{background:var(--amber-light);border-color:var(--amber-mid)}
+.qn{font-size:12px;font-weight:500;min-width:16px;text-align:center;color:var(--text)}
+.xb{color:var(--text-hint);background:transparent;border:none;cursor:pointer;font-size:12px;padding:2px;font-family:'DM Sans',sans-serif}
+.xb:hover{color:var(--red)}
+.empty-cart{text-align:center;padding:36px 12px;color:var(--text-hint);font-size:12px}
+.cart-footer{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.disc-row{display:flex;gap:5px;margin-bottom:8px}
+.disc-row input{flex:1;padding:6px 9px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none}
+.disc-row input:focus{border-color:var(--amber-mid)}
+.disc-row button{padding:6px 10px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:transparent;color:var(--text-muted)}
+.disc-row button:hover{border-color:var(--amber-mid);color:var(--amber)}
+.totals{margin-bottom:8px}
+.t-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);padding:2px 0}
+.t-row.grand{font-size:14px;font-weight:500;color:var(--text);border-top:1px solid var(--border);margin-top:5px;padding-top:7px}
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px}
+.pb{padding:6px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;background:transparent;color:var(--text);transition:all .15s}
+.pb:hover{border-color:var(--amber-mid);background:var(--amber-light)}
+.pb.sel{background:var(--amber-light);border-color:var(--amber);color:var(--amber);font-weight:500}
+.charge-btn{width:100%;padding:10px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;border:none;border-radius:var(--radius);cursor:pointer;background:var(--amber);color:#fff;transition:all .15s}
+.charge-btn:hover{background:var(--amber-dark)}
+.charge-btn:disabled{background:var(--border);color:var(--text-hint);cursor:not-allowed}
+
+/* ── ADMIN PANEL ── */
+.admin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center}
+.admin-overlay.hidden{display:none}
+.admin-box{background:var(--surface);border-radius:var(--radius-lg);width:520px;max-height:85vh;overflow-y:auto;border:1px solid var(--border)}
+.admin-hdr{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.admin-hdr h2{font-size:15px;font-weight:500;color:var(--text)}
+.admin-close{background:transparent;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);padding:2px 6px}
+.admin-close:hover{color:var(--red)}
+.admin-body{padding:18px 20px}
+.admin-section{margin-bottom:22px}
+.admin-section-title{font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.staff-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.staff-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg)}
+.sr-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;flex-shrink:0}
+.sr-info{flex:1;min-width:0}
+.sr-name{font-size:13px;font-weight:500;color:var(--text)}
+.sr-meta{font-size:11px;color:var(--text-muted)}
+.sr-actions{display:flex;gap:5px}
+.sr-btn{padding:4px 10px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;cursor:pointer;background:transparent;color:var(--text-muted)}
+.sr-btn:hover{border-color:var(--amber-mid);color:var(--amber)}
+.sr-btn.del:hover{border-color:var(--red);color:var(--red)}
+.add-staff-form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:11px;color:var(--text-muted)}
+.form-group input,.form-group select{padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--amber-mid)}
+.add-btn{grid-column:1/-1;padding:8px;font-size:12px;font-family:'DM Sans',sans-serif;border:none;border-radius:var(--radius);cursor:pointer;background:var(--amber);color:#fff;font-weight:500}
+.add-btn:hover{background:var(--amber-dark)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--teal);color:var(--teal-light);padding:7px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.toast.show{opacity:1}
+
+@media print{
+  body *{visibility:hidden}
+  #print-frame,#print-frame *{visibility:visible}
+  #print-frame{position:fixed;top:0;left:0;width:100%;height:100%;border:none}
+}
+
+/* ── STOCK SYSTEM ─────────────────────────────────── */
+.hn.stock-alert{border-color:#E87B3A!important;background:#FEF0E6!important;color:#C45A1A!important}
+.mi{position:relative}
+.mi.out-of-stock{opacity:.5;cursor:not-allowed;border-color:#FCEBEB!important}
+.mi.out-of-stock:hover{transform:none!important;background:var(--surface)!important;border-color:#FCEBEB!important}
+.mi.low-stock{border-color:#E87B3A}
+.mi-stock-badge{position:absolute;top:7px;right:7px;font-size:9px;font-weight:500;padding:2px 5px;border-radius:7px;line-height:1.3}
+.sb-ok{background:#EAF3DE;color:#3B6D11}
+.sb-low{background:#FEF0E6;color:#C45A1A}
+.sb-out{background:#FCEBEB;color:#A32D2D}
+.toast.warn{background:#C45A1A!important}
+.toast.err{background:#A32D2D!important}
+
+/* ── STOCK MANAGEMENT ─────────────────────────────── */
+.inv-wrap{padding:16px;overflow-y:auto;flex:1;background:#FAFAF8}
+.inv-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.inv-header h3{font-size:15px;font-weight:500;color:#1C1A17;flex:1}
+.inv-search{padding:6px 12px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid #E8E5DE;border-radius:20px;background:#fff;color:#1C1A17;outline:none;width:170px}
+.inv-search:focus{border-color:#FAC775}
+.sf{padding:5px 12px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid #E8E5DE;border-radius:20px;cursor:pointer;background:transparent;color:#6B6860;transition:all .15s}
+.sf:hover{background:#FAEEDA;color:#BA7517;border-color:#FAC775}
+.sf.active{background:#FAEEDA;color:#BA7517;border-color:#FAC775;font-weight:500}
+/* stat cards */
+.inv-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.ist{background:#fff;border:1px solid #E8E5DE;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.ist-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ist-body{}
+.ist-lbl{font-size:10px;color:#6B6860;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.ist-val{font-size:22px;font-weight:500;font-family:'DM Serif Display',serif;line-height:1}
+/* category section */
+.cat-section{margin-bottom:18px}
+.cat-section-hdr{font-size:11px;font-weight:500;color:#6B6860;text-transform:uppercase;letter-spacing:.06em;padding:6px 0 8px;border-bottom:1px solid #E8E5DE;margin-bottom:10px}
+/* item cards grid */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.inv-card{background:#fff;border:1px solid #E8E5DE;border-radius:14px;overflow:hidden;transition:box-shadow .15s}
+.inv-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.inv-card.status-low{border-color:#E87B3A}
+.inv-card.status-out{border-color:#A32D2D}
+.inv-card-top{padding:12px 14px 10px;display:flex;align-items:flex-start;gap:10px}
+.inv-emoji{font-size:22px;line-height:1;flex-shrink:0;margin-top:2px}
+.inv-meta{flex:1;min-width:0}
+.inv-name{font-size:13px;font-weight:500;color:#1C1A17;margin-bottom:1px}
+.inv-cat{font-size:11px;color:#A09D98}
+.inv-status{margin-left:auto;flex-shrink:0}
+.spill{display:inline-block;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:500}
+.spill-ok{background:#EAF3DE;color:#3B6D11}
+.spill-low{background:#FEF0E6;color:#C45A1A}
+.spill-out{background:#FCEBEB;color:#A32D2D}
+/* stock bar */
+.inv-bar-row{padding:0 14px 10px;display:flex;align-items:center;gap:8px}
+.inv-bar-track{flex:1;height:7px;background:#F0EDE8;border-radius:4px;overflow:hidden}
+.inv-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.ibf-ok{background:linear-gradient(90deg,#3B6D11,#5a9e1a)}
+.ibf-low{background:linear-gradient(90deg,#C45A1A,#e87b3a)}
+.ibf-out{background:#A32D2D}
+.inv-qty{font-size:14px;font-weight:500;min-width:34px;text-align:right}
+.qty-ok{color:#3B6D11}.qty-low{color:#C45A1A}.qty-out{color:#A32D2D}
+/* controls */
+.inv-controls{padding:10px 14px;border-top:1px solid #F0EDE8;display:flex;align-items:center;gap:6px;background:#FAFAF8}
+.icc-btn{width:28px;height:28px;border:1px solid #E8E5DE;border-radius:50%;background:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:#1C1A17;transition:all .15s;flex-shrink:0;line-height:1;font-family:'DM Sans',sans-serif}
+.icc-btn.minus:hover{background:#FCEBEB;border-color:#A32D2D;color:#A32D2D}
+.icc-btn.plus:hover{background:#EAF3DE;border-color:#3B6D11;color:#3B6D11}
+.icc-input{flex:1;padding:6px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid #E8E5DE;border-radius:8px;background:#fff;color:#1C1A17;text-align:center;outline:none;min-width:0}
+.icc-input:focus{border-color:#FAC775}
+.icc-restock{padding:6px 12px;font-size:11px;font-family:'DM Sans',sans-serif;border:none;border-radius:8px;cursor:pointer;background:#3B6D11;color:#fff;font-weight:500;white-space:nowrap;transition:all .15s}
+.icc-restock:hover{background:#2d5409}
+.icc-set{padding:6px 10px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid #E8E5DE;border-radius:8px;cursor:pointer;background:#fff;color:#6B6860;transition:all .15s}
+.icc-set:hover{border-color:#BA7517;color:#BA7517}
+/* history timeline */
+.inv-history{padding:0 14px 12px}
+.hist-title{font-size:10px;font-weight:500;color:#A09D98;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.hist-timeline{display:flex;flex-direction:column;gap:4px}
+.ht-row{display:flex;align-items:center;gap:7px;font-size:11px}
+.ht-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ht-dot-sale{background:#A32D2D}
+.ht-dot-restock{background:#3B6D11}
+.ht-dot-adjust{background:#BA7517}
+.ht-time{color:#A09D98;min-width:50px}
+.ht-desc{color:#1C1A17;flex:1}
+.ht-delta{font-weight:500;min-width:28px;text-align:right}
+.ht-delta-neg{color:#A32D2D}
+.ht-delta-pos{color:#3B6D11}
+.no-hist{font-size:11px;color:#A09D98;font-style:italic}
+/* set stock modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:800;display:flex;align-items:center;justify-content:center}
+.modal-overlay.hidden{display:none}
+.modal-box{background:#fff;border-radius:16px;padding:24px;width:300px;border:1px solid #E8E5DE;box-shadow:0 8px 40px rgba(0,0,0,.12)}
+.modal-box h3{font-size:15px;font-weight:500;color:#1C1A17;margin-bottom:4px}
+.modal-box p{font-size:12px;color:#6B6860;margin-bottom:16px}
+.modal-input-row{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.modal-input-row label{font-size:11px;color:#6B6860;font-weight:500}
+.modal-input-row input{padding:9px 12px;font-size:14px;font-family:'DM Sans',sans-serif;border:1px solid #E8E5DE;border-radius:10px;color:#1C1A17;outline:none;text-align:center}
+.modal-input-row input:focus{border-color:#FAC775}
+.modal-btns{display:flex;gap:8px}
+.modal-cancel{flex:1;padding:9px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid #E8E5DE;border-radius:10px;cursor:pointer;background:transparent;color:#6B6860}
+.modal-confirm{flex:1;padding:9px;font-size:13px;font-family:'DM Sans',sans-serif;border:none;border-radius:10px;cursor:pointer;background:#BA7517;color:#fff;font-weight:500}
+.modal-confirm:hover{background:#854F0B}
+
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">My <span>Café</span></div>
+    <div class="login-sub">Select your profile to continue</div>
+    <div class="staff-grid" id="login-staff-grid"></div>
+    <div class="pin-section" id="pin-section" style="display:none">
+      <div class="pin-label" id="pin-label">Enter PIN for <strong id="pin-for"></strong></div>
+      <div class="pin-dots" id="pin-dots"></div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinKey('1')">1</button>
+        <button class="pin-key" onclick="pinKey('2')">2</button>
+        <button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button>
+        <button class="pin-key" onclick="pinKey('5')">5</button>
+        <button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button>
+        <button class="pin-key" onclick="pinKey('8')">8</button>
+        <button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key clear" onclick="pinClear()">Clear</button>
+        <button class="pin-key" onclick="pinKey('0')">0</button>
+        <button class="pin-key enter" onclick="pinEnter()">Enter</button>
+      </div>
+      <div class="login-error" id="login-error"></div>
+    </div>
+    <div class="login-hint" id="login-hint">Default PINs: Manager=0000 · Cashier 1=1111 · Cashier 2=2222</div>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL OVERLAY ── -->
+<div class="admin-overlay hidden" id="admin-overlay" onclick="closeAdmin(event)">
+  <div class="admin-box" onclick="event.stopPropagation()">
+    <div class="admin-hdr">
+      <h2>⚙️ Admin Panel</h2>
+      <button class="admin-close" onclick="closeAdminPanel()">✕</button>
+    </div>
+    <div class="admin-body">
+      <div class="admin-section">
+        <div class="admin-section-title">Staff Members</div>
+        <div class="staff-list" id="admin-staff-list"></div>
+        <div class="admin-section-title" style="margin-top:14px">Add New Staff</div>
+        <div class="add-staff-form">
+          <div class="form-group">
+            <label>Full name</label>
+            <input type="text" id="new-name" placeholder="e.g. Kasun Silva">
+          </div>
+          <div class="form-group">
+            <label>4-digit PIN</label>
+            <input type="password" id="new-pin" placeholder="e.g. 3456" maxlength="4">
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="new-role">
+              <option value="cashier">Cashier</option>
+              <option value="manager">Manager</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Avatar emoji</label>
+            <input type="text" id="new-emoji" placeholder="e.g. 👩" maxlength="2">
+          </div>
+          <button class="add-btn" onclick="addStaff()">Add Staff Member</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP HEADER ── -->
+<header class="app-header">
+  <div class="app-logo">My <span>Café</span></div>
+  <nav class="header-nav">
+    <button class="hn active" id="tab-pos" onclick="switchView('pos')">POS</button>
+    <button class="hn" id="tab-summary" onclick="switchView('summary')">Daily summary</button>
+    <button class="hn" id="tab-receipt" style="display:none" onclick="switchView('receipt')">Last receipt</button>
+    <button class="hn" id="tab-stock" onclick="switchView('stock')">📦 Stock</button>
+    <button class="hn" id="tab-admin" style="display:none" onclick="openAdminPanel()">⚙ Admin</button>
+  </nav>
+  <div class="header-right">
+    <span class="date-badge" id="date-badge"></span>
+    <div class="staff-badge" id="staff-badge" onclick="logoutStaff()">
+      <div class="sb-avatar" id="sb-avatar"></div>
+      <div>
+        <div class="sb-name" id="sb-name"></div>
+        <div class="sb-role" id="sb-role"></div>
+      </div>
+    </div>
+    <button class="export-btn" onclick="exportSummary()">Export PDF</button>
+    <button class="clear-btn" onclick="clearData()">Clear day</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="left" id="left">
+    <!-- POS -->
+    <div id="pos-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="cat-row" id="cats"></div>
+      <div class="search-row"><input type="text" id="search" placeholder="Search menu items..." oninput="renderMenu()"></div>
+      <div class="menu-grid" id="menu-grid"></div>
+    </div>
+    <!-- Stock -->
+    <div id="stock-view" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div class="inv-wrap" id="inv-wrap">
+        <div class="inv-header">
+          <h3>📦 Inventory Management</h3>
+          <input class="inv-search" type="text" id="inv-search" placeholder="Search items..." oninput="renderStockView()">
+          <div style="display:flex;gap:4px">
+            <button class="sf active" id="sf-all" onclick="setStockFilter('all')">All</button>
+            <button class="sf" id="sf-low" onclick="setStockFilter('low')">⚠ Low</button>
+            <button class="sf" id="sf-out" onclick="setStockFilter('out')">✕ Out</button>
+          </div>
+        </div>
+        <div class="inv-stats" id="inv-stats"></div>
+        <div id="inv-body"></div>
+      </div>
+    </div>
+    <!-- Summary -->
+    <div id="summary-view" class="summary-view" style="display:none"></div>
+    <!-- Receipt -->
+    <div id="receipt-view" class="receipt-view" style="display:none">
+      <div id="receipt-content"></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="cart-hdr">
+      <span>Current order</span>
+      <span class="o-num" id="o-num">Order #001</span>
+    </div>
+    <div class="cart-list" id="cart-list">
+      <div class="empty-cart" id="empty-msg">Tap items to add them</div>
+    </div>
+    <div class="cart-footer">
+      <div class="disc-row">
+        <input type="text" id="disc-code" placeholder="Discount code (SAVE10, CAFE20, VIP15)">
+        <button onclick="applyDisc()">Apply</button>
+      </div>
+      <div class="totals">
+        <div class="t-row"><span>Subtotal</span><span id="t-sub">LKR 0</span></div>
+        <div class="t-row"><span>Discount</span><span id="t-disc">— LKR 0</span></div>
+        <div class="t-row"><span>Tax (10%)</span><span id="t-tax">LKR 0</span></div>
+        <div class="t-row grand"><span>Total</span><span id="t-total">LKR 0</span></div>
+      </div>
+      <div class="pay-grid">
+        <button class="pb sel" onclick="selPay(this,'Cash')">Cash</button>
+        <button class="pb" onclick="selPay(this,'Card')">Card</button>
+        <button class="pb" onclick="selPay(this,'QR Pay')">QR Pay</button>
+        <button class="pb" onclick="selPay(this,'Credit')">Credit</button>
+      </div>
+      <button class="charge-btn" id="charge-btn" onclick="charge()" disabled>Charge LKR 0</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──────────────────────────────────────────
+const TAX = 0.10;
+const CODES = { 'SAVE10': 10, 'CAFE20': 20, 'VIP15': 15 };
+const STORAGE_KEY  = 'mycafe_orders';
+const COUNTER_KEY  = 'mycafe_counter';
+const TODAY_KEY    = 'mycafe_today';
+const STAFF_KEY    = 'mycafe_staff';
+const STOCK_KEY    = 'mycafe_stock';
+const SLOG_KEY     = 'mycafe_slog';
+const LOW_THR      = 10;
+
+// ── DEFAULT STAFF ──────────────────────────────────────
+const DEFAULT_STAFF = [
+  { id:'s1', name:'Manager',   pin:'0000', role:'manager',  emoji:'👑', color:'#7C3AED', bg:'#EDE9FA' },
+  { id:'s2', name:'Cashier 1', pin:'1111', role:'cashier',  emoji:'😊', color:'#0F6E56', bg:'#E1F5EE' },
+  { id:'s3', name:'Cashier 2', pin:'2222', role:'cashier',  emoji:'🙂', color:'#BA7517', bg:'#FAEEDA' },
+];
+
+// ── MENU ───────────────────────────────────────────────
+const menu = [
+  {id:1,name:'Espresso',price:350,cat:'Coffee',emoji:'☕'},
+  {id:2,name:'Cappuccino',price:480,cat:'Coffee',emoji:'☕'},
+  {id:3,name:'Iced Latte',price:550,cat:'Coffee',emoji:'🧋'},
+  {id:4,name:'Flat White',price:480,cat:'Coffee',emoji:'☕'},
+  {id:5,name:'Cold Brew',price:600,cat:'Coffee',emoji:'🥤'},
+  {id:6,name:'Matcha Latte',price:580,cat:'Coffee',emoji:'🍵'},
+  {id:7,name:'Croissant',price:380,cat:'Pastries',emoji:'🥐'},
+  {id:8,name:'Muffin',price:320,cat:'Pastries',emoji:'🧁'},
+  {id:9,name:'Cheesecake',price:550,cat:'Pastries',emoji:'🍰'},
+  {id:10,name:'Avocado Toast',price:750,cat:'Food',emoji:'🥑'},
+  {id:11,name:'Chicken Wrap',price:850,cat:'Food',emoji:'🌯'},
+  {id:12,name:'Caesar Salad',price:800,cat:'Food',emoji:'🥗'},
+  {id:13,name:'Grilled Sandwich',price:700,cat:'Food',emoji:'🥪'},
+  {id:14,name:'Orange Juice',price:400,cat:'Drinks',emoji:'🍊'},
+  {id:15,name:'Sparkling Water',price:280,cat:'Drinks',emoji:'💧'},
+  {id:16,name:'Mango Smoothie',price:520,cat:'Drinks',emoji:'🥭'},
+  {id:17,name:'Chocolate Lava Cake',price:650,cat:'Desserts',emoji:'🍫'},
+  {id:18,name:'Ice Cream Scoop',price:300,cat:'Desserts',emoji:'🍨'},
+  {id:19,name:'Waffles',price:550,cat:'Desserts',emoji:'🧇'},
+  {id:20,name:"Today's Soup",price:400,cat:'Specials',emoji:'🍲'},
+];
+
+// ── STATE ──────────────────────────────────────────────
+let cart = {}, activeCat = 'All', payMethod = 'Cash', discPct = 0, currentReceipt = null;
+let currentStaff = null;
+let pinInput = '';
+let selectedStaffForPin = null;
+
+// ── STAFF STORAGE ──────────────────────────────────────
+function loadStaff() {
+  try {
+    const s = localStorage.getItem(STAFF_KEY);
+    return s ? JSON.parse(s) : [...DEFAULT_STAFF];
+  } catch(e) { return [...DEFAULT_STAFF]; }
+}
+function saveStaffList(list) {
+  try { localStorage.setItem(STAFF_KEY, JSON.stringify(list)); } catch(e) {}
+}
+let staffList = loadStaff();
+
+// ── ORDER STORAGE ──────────────────────────────────────
+function todayStr() { return new Date().toLocaleDateString('en-LK', {year:'numeric',month:'2-digit',day:'2-digit'}); }
+function loadOrders() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY), d = localStorage.getItem(TODAY_KEY);
+    if (s && d === todayStr()) return JSON.parse(s);
+  } catch(e) {}
+  return [];
+}
+function saveOrders(o) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); localStorage.setItem(TODAY_KEY, todayStr()); } catch(e) {}
+}
+function loadCounter() { try { return parseInt(localStorage.getItem(COUNTER_KEY)) || 1; } catch(e) { return 1; } }
+function saveCounter(n) { try { localStorage.setItem(COUNTER_KEY, n); } catch(e) {} }
+
+let orderHistory = loadOrders();
+let orderCount = loadCounter() + orderHistory.length;
+
+// ── STOCK & STOCK LOG ──────────────────────────────────
+function defaultStock(){const s={};menu.forEach(i=>{s[i.id]=50;});return s;}
+function loadStock(){
+  try{
+    const s=localStorage.getItem(STOCK_KEY);
+    if(s){const p=JSON.parse(s);menu.forEach(i=>{if(p[i.id]===undefined)p[i.id]=50;});return p;}
+  }catch(e){}
+  return defaultStock();
+}
+function saveStock(){try{localStorage.setItem(STOCK_KEY,JSON.stringify(stock));}catch(e){}}
+function loadSLog(){
+  try{
+    const l=localStorage.getItem(SLOG_KEY),d=localStorage.getItem(TODAY_KEY);
+    if(l&&d===todayStr())return JSON.parse(l);
+  }catch(e){}
+  return[];
+}
+function saveSLog(){try{localStorage.setItem(SLOG_KEY,JSON.stringify(sLog));}catch(e){}}
+let stock=loadStock(), sLog=loadSLog(), stockFilter='all';
+function logChange(itemId,type,delta){
+  const it=menu.find(i=>i.id==itemId);if(!it)return;
+  sLog.unshift({id:it.id,name:it.name,emoji:it.emoji,type,delta,qty:stock[itemId],
+    time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})});
+  saveSLog();
+}
+function stockStatus(qty){return qty<=0?'out':qty<=LOW_THR?'low':'ok';}
+function alertCount(){return menu.filter(i=>stockStatus(stock[i.id])!=='ok').length;}
+
+// ── LOGIN ──────────────────────────────────────────────
+function renderLoginGrid() {
+  const grid = document.getElementById('login-staff-grid');
+  grid.innerHTML = staffList.map(s => `
+    <div class="staff-card" id="sc-${s.id}" onclick="selectStaff('${s.id}')">
+      <div class="staff-avatar" style="background:${s.bg};color:${s.color}">${s.emoji}</div>
+      <div class="staff-name">${s.name}</div>
+      <div class="staff-role">${s.role}</div>
+    </div>`).join('');
+}
+
+function selectStaff(id) {
+  selectedStaffForPin = staffList.find(s => s.id === id);
+  if (!selectedStaffForPin) return;
+  pinInput = '';
+  document.querySelectorAll('.staff-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('sc-' + id).classList.add('selected');
+  document.getElementById('pin-for').textContent = selectedStaffForPin.name;
+  document.getElementById('pin-section').style.display = 'block';
+  document.getElementById('login-hint').style.display = 'none';
+  document.getElementById('login-error').textContent = '';
+  renderPinDots();
+}
+
+function renderPinDots() {
+  document.getElementById('pin-dots').innerHTML =
+    [0,1,2,3].map(i => `<div class="pin-dot${i < pinInput.length ? ' filled' : ''}"></div>`).join('');
+}
+
+function pinKey(k) {
+  if (pinInput.length >= 4) return;
+  pinInput += k;
+  renderPinDots();
+  if (pinInput.length === 4) setTimeout(pinEnter, 120);
+}
+function pinClear() { pinInput = ''; renderPinDots(); document.getElementById('login-error').textContent = ''; }
+
+function pinEnter() {
+  if (!selectedStaffForPin) return;
+  if (pinInput === selectedStaffForPin.pin) {
+    currentStaff = selectedStaffForPin;
+    document.getElementById('login-screen').classList.add('hidden');
+    updateStaffBadge();
+    if (currentStaff.role === 'manager') document.getElementById('tab-admin').style.display = '';
+    else document.getElementById('tab-admin').style.display = 'none';
+    showToast('Welcome, ' + currentStaff.name + '! 👋');
+  } else {
+    document.getElementById('login-error').textContent = 'Incorrect PIN. Please try again.';
+    pinInput = '';
+    renderPinDots();
+    const box = document.querySelector('.login-box');
+    box.style.transform = 'translateX(8px)';
+    setTimeout(() => box.style.transform = 'translateX(-8px)', 80);
+    setTimeout(() => box.style.transform = '', 160);
+  }
+}
+
+function updateStaffBadge() {
+  if (!currentStaff) return;
+  document.getElementById('sb-avatar').textContent = currentStaff.emoji;
+  document.getElementById('sb-avatar').style.background = currentStaff.bg;
+  document.getElementById('sb-avatar').style.color = currentStaff.color;
+  document.getElementById('sb-name').textContent = currentStaff.name;
+  document.getElementById('sb-role').textContent = currentStaff.role;
+}
+
+function logoutStaff() {
+  if (!confirm('Log out of POS? Active cart will be cleared.')) return;
+  currentStaff = null; cart = {}; discPct = 0;
+  renderCart(); updateTotals();
+  pinInput = ''; selectedStaffForPin = null;
+  document.getElementById('pin-section').style.display = 'none';
+  document.getElementById('login-hint').style.display = 'block';
+  document.querySelectorAll('.staff-card').forEach(c => c.classList.remove('selected'));
+  renderLoginGrid();
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('tab-admin').style.display = 'none';
+  switchView('pos');
+}
+
+// ── ADMIN PANEL ────────────────────────────────────────
+function openAdminPanel() {
+  if (!currentStaff || currentStaff.role !== 'manager') return showToast('Manager access only');
+  renderAdminStaffList();
+  document.getElementById('admin-overlay').classList.remove('hidden');
+}
+function closeAdminPanel() { document.getElementById('admin-overlay').classList.add('hidden'); }
+function closeAdmin(e) { if (e.target === document.getElementById('admin-overlay')) closeAdminPanel(); }
+
+function renderAdminStaffList() {
+  document.getElementById('admin-staff-list').innerHTML = staffList.map(s => `
+    <div class="staff-row">
+      <div class="sr-avatar" style="background:${s.bg};color:${s.color}">${s.emoji}</div>
+      <div class="sr-info">
+        <div class="sr-name">${s.name}</div>
+        <div class="sr-meta">PIN: ${'•'.repeat(s.pin.length)} · <span class="role-pill role-${s.role}">${s.role}</span></div>
+      </div>
+      <div class="sr-actions">
+        <button class="sr-btn" onclick="resetPin('${s.id}')">Reset PIN</button>
+        ${s.id !== currentStaff.id ? `<button class="sr-btn del" onclick="removeStaff('${s.id}')">Remove</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function addStaff() {
+  const name  = document.getElementById('new-name').value.trim();
+  const pin   = document.getElementById('new-pin').value.trim();
+  const role  = document.getElementById('new-role').value;
+  const emoji = document.getElementById('new-emoji').value.trim() || '👤';
+  if (!name || !pin) return showToast('Please fill in name and PIN');
+  if (!/^\d{4}$/.test(pin)) return showToast('PIN must be exactly 4 digits');
+  const colors = [
+    {color:'#7C3AED',bg:'#EDE9FA'},{color:'#0F6E56',bg:'#E1F5EE'},
+    {color:'#BA7517',bg:'#FAEEDA'},{color:'#A32D2D',bg:'#FCEBEB'},
+    {color:'#1D4ED8',bg:'#DBEAFE'}
+  ];
+  const c = colors[staffList.length % colors.length];
+  const newMember = { id: 's' + Date.now(), name, pin, role, emoji, color: c.color, bg: c.bg };
+  staffList.push(newMember);
+  saveStaffList(staffList);
+  ['new-name','new-pin','new-emoji'].forEach(id => document.getElementById(id).value = '');
+  renderAdminStaffList();
+  renderLoginGrid();
+  showToast(name + ' added!');
+}
+
+function removeStaff(id) {
+  if (!confirm('Remove this staff member?')) return;
+  staffList = staffList.filter(s => s.id !== id);
+  saveStaffList(staffList);
+  renderAdminStaffList();
+  renderLoginGrid();
+  showToast('Staff member removed');
+}
+
+function resetPin(id) {
+  const newPin = prompt('Enter new 4-digit PIN for this staff member:');
+  if (!newPin) return;
+  if (!/^\d{4}$/.test(newPin)) return showToast('PIN must be exactly 4 digits');
+  staffList = staffList.map(s => s.id === id ? {...s, pin: newPin} : s);
+  saveStaffList(staffList);
+  renderAdminStaffList();
+  showToast('PIN updated');
+}
+
+// ── HELPERS ────────────────────────────────────────────
+function fmt(n) { return 'LKR ' + Math.round(n).toLocaleString('en-LK'); }
+function getItemSales() {
+  const s = {};
+  orderHistory.forEach(o => o.items.forEach(it => {
+    if (!s[it.name]) s[it.name] = {qty:0, rev:0, emoji:it.emoji};
+    s[it.name].qty += it.qty; s[it.name].rev += it.price * it.qty;
+  }));
+  return s;
+}
+function setDateBadge() {
+  document.getElementById('date-badge').textContent = new Date().toLocaleDateString('en-LK', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+
+// ── VIEWS ──────────────────────────────────────────────
+function switchView(v) {
+  ['pos','summary','receipt'].forEach(id => document.getElementById(id+'-view').style.display = 'none');
+  const el = document.getElementById(v+'-view');
+  el.style.display = v === 'pos' ? 'flex' : (v === 'summary' ? 'block' : 'flex');
+  if (v === 'pos') { el.style.flexDirection='column'; el.style.flex='1'; el.style.overflow='hidden'; }
+  if (v === 'receipt') el.style.flex = '1';
+  if (v === 'summary') renderSummary();
+  if (v === 'stock') { document.getElementById('stock-view').style.display='flex'; document.getElementById('stock-view').style.flexDirection='column'; document.getElementById('stock-view').style.flex='1'; document.getElementById('stock-view').style.overflow='hidden'; renderStockView(); }
+  document.querySelectorAll('.hn').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-' + (v==='receipt' ? 'receipt' : v === 'stock' ? 'stock' : v));
+  if (tab) tab.classList.add('active');
+}
+
+// ── MENU ───────────────────────────────────────────────
+function renderCats() {
+  const cats = ['All', ...new Set(menu.map(i => i.cat))];
+  document.getElementById('cats').innerHTML = cats.map(c =>
+    `<button class="cb${c===activeCat?' active':''}" onclick="setCat('${c}')">${c}</button>`).join('');
+}
+function setCat(c) { activeCat = c; renderCats(); renderMenu(); }
+function renderMenu() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const items = menu.filter(i => (activeCat==='All'||i.cat===activeCat) && i.name.toLowerCase().includes(q));
+  document.getElementById('menu-grid').innerHTML = items.map(i => {
+    const qty=stock[i.id]||0, st=stockStatus(qty);
+    const oos=st==='out';
+    const badgeCls=st==='ok'?'sb-ok':st==='low'?'sb-low':'sb-out';
+    const badgeTxt=st==='out'?'Out':st==='low'?'Low: '+qty:String(qty);
+    return '<div class="mi'+(oos?' out-of-stock':'')+(st==='low'?' low-stock':'')+'" onclick="'+(oos?"showToast(\'Out of stock — restock in 📦 Stock tab\',\'err\')":'addItem('+i.id+')')+'"><div class="mi-stock-badge '+badgeCls+'">'+badgeTxt+'</div><div class="mi-em">'+i.emoji+'</div><div class="mi-name">'+i.name+'</div><div class="mi-price">'+fmt(i.price)+'</div><div class="mi-cat">'+i.cat+'</div></div>';
+  }).join('');
+  const cnt=alertCount(), tab=document.getElementById('tab-stock');
+  if(tab){if(cnt>0){tab.textContent='📦 Stock ('+cnt+')';tab.classList.add('stock-alert');}else{tab.textContent='📦 Stock';tab.classList.remove('stock-alert');}}
+}
+
+// ── CART ───────────────────────────────────────────────
+function addItem(id) {
+  if((stock[id]||0)<=0) return showToast('Out of stock — restock in 📦 Stock tab','err');
+  cart[id]=(cart[id]||0)+1; renderCart(); updateTotals();
+}
+function changeQty(id,d) {
+  if(d>0 && (cart[id]||0)+1>(stock[id]||0)) return showToast('Not enough stock!','warn');
+  cart[id]=(cart[id]||0)+d; if(cart[id]<=0) delete cart[id]; renderCart(); updateTotals();
+}
+function removeItem(id) { delete cart[id]; renderCart(); updateTotals(); }
+function renderCart() {
+  const el = document.getElementById('cart-list');
+  document.getElementById('empty-msg').style.display = Object.keys(cart).length ? 'none' : 'block';
+  [...el.querySelectorAll('.cart-item')].forEach(e => e.remove());
+  Object.keys(cart).forEach(id => {
+    const item = menu.find(i => i.id==id);
+    const div = document.createElement('div'); div.className='cart-item';
+    div.innerHTML=`<div class="ci-info"><div class="ci-name">${item.emoji} ${item.name}</div><div class="ci-price">${fmt(item.price)} × ${cart[id]} = ${fmt(item.price*cart[id])}</div></div>
+    <div class="qty-ctrl"><button class="qb" onclick="changeQty(${id},-1)">−</button><span class="qn">${cart[id]}</span><button class="qb" onclick="changeQty(${id},1)">+</button></div>
+    <button class="xb" onclick="removeItem(${id})">✕</button>`;
+    el.appendChild(div);
+  });
+}
+function updateTotals() {
+  const sub = Object.keys(cart).reduce((s,id) => { const it=menu.find(i=>i.id==id); return s+it.price*cart[id]; },0);
+  const disc = Math.round(sub*discPct/100), taxable=sub-disc, tax=Math.round(taxable*TAX), total=taxable+tax;
+  document.getElementById('t-sub').textContent=fmt(sub);
+  document.getElementById('t-disc').textContent=disc>0?'— '+fmt(disc):'— LKR 0';
+  document.getElementById('t-tax').textContent=fmt(tax);
+  document.getElementById('t-total').textContent=fmt(total);
+  const btn=document.getElementById('charge-btn');
+  btn.textContent=total>0?'Charge '+fmt(total):'Charge LKR 0';
+  btn.disabled=total===0;
+}
+function applyDisc() {
+  const code=document.getElementById('disc-code').value.trim().toUpperCase();
+  if(CODES[code]){discPct=CODES[code];showToast('Discount applied: '+discPct+'% off');}
+  else{discPct=0;showToast('Invalid code — try SAVE10, CAFE20, or VIP15');}
+  updateTotals();
+}
+function selPay(el,m) { payMethod=m; document.querySelectorAll('.pb').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); }
+
+// ── CHARGE ─────────────────────────────────────────────
+function charge() {
+  if (!Object.keys(cart).length) return;
+  const sub=Object.keys(cart).reduce((s,id)=>{const it=menu.find(i=>i.id==id);return s+it.price*cart[id];},0);
+  const disc=Math.round(sub*discPct/100),taxable=sub-disc,tax=Math.round(taxable*TAX),total=taxable+tax;
+  const now=new Date();
+  const order={
+    num:String(orderCount).padStart(3,'0'),
+    items:Object.keys(cart).map(id=>{const it=menu.find(i=>i.id==id);return{name:it.name,emoji:it.emoji,price:it.price,qty:cart[id]};}),
+    sub,disc,discPct,tax,total,payMethod,
+    time:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    date:now.toLocaleDateString('en-LK'),
+    staffId:currentStaff.id,
+    staffName:currentStaff.name,
+    staffEmoji:currentStaff.emoji,
+  };
+  // Deduct stock
+  Object.keys(cart).forEach(id=>{
+    const qty=cart[id];
+    stock[id]=Math.max(0,(stock[id]||0)-qty);
+    logChange(id,'sale',-qty);
+    const st=stockStatus(stock[id]);
+    if(st==='low') setTimeout(()=>showToast('⚠ Low stock: '+menu.find(i=>i.id==id).name+' ('+stock[id]+' left)','warn'),400);
+    if(st==='out') setTimeout(()=>showToast('✕ Out of stock: '+menu.find(i=>i.id==id).name,'err'),800);
+  });
+  saveStock();
+  orderHistory.unshift(order);
+  saveOrders(orderHistory);
+  orderCount++; saveCounter(orderCount);
+  cart={}; discPct=0;
+  document.getElementById('disc-code').value='';
+  document.getElementById('o-num').textContent='Order #'+String(orderCount).padStart(3,'0');
+  renderCart(); updateTotals();
+  document.getElementById('tab-receipt').style.display='';
+  buildReceipt(order); switchView('receipt');
+  showToast('Payment complete via '+payMethod);
+}
+
+// ── RECEIPT ────────────────────────────────────────────
+function downloadReceiptPDF(o) {
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:[80,297],orientation:'portrait'});
+  const W=80,margin=6; let y=10;
+  const center=(text,yy,size,style)=>{doc.setFontSize(size||10);doc.setFont('helvetica',style||'normal');doc.text(text,W/2,yy,{align:'center'});};
+  const row=(left,right,yy,size,style)=>{doc.setFontSize(size||9);doc.setFont('helvetica',style||'normal');doc.text(left,margin,yy);doc.text(right,W-margin,yy,{align:'right'});};
+  const dashes=(yy)=>{doc.setLineDashPattern([1,1],0);doc.setDrawColor(180);doc.line(margin,yy,W-margin,yy);doc.setLineDashPattern([],0);};
+  center('My Café',y,14,'bold'); y+=6;
+  doc.setTextColor(100);
+  center(o.date+'  ·  '+o.time,y,8); y+=4;
+  center('Order #'+o.num,y,8); y+=4;
+  center('Served by: '+o.staffName,y,8); y+=5;
+  doc.setTextColor(0);
+  dashes(y); y+=5;
+  o.items.forEach(it=>{row(it.name+' x'+it.qty,fmt(it.price*it.qty),y,9);y+=5;});
+  dashes(y); y+=5;
+  if(o.discPct>0){doc.setTextColor(100);row('Discount ('+o.discPct+'%)','-'+fmt(o.disc),y,9);y+=5;doc.setTextColor(0);}
+  doc.setTextColor(100); row('Tax (10%)',fmt(o.tax),y,9); y+=5; doc.setTextColor(0);
+  dashes(y); y+=5;
+  row('TOTAL',fmt(o.total),y,11,'bold'); y+=6;
+  dashes(y); y+=5;
+  doc.setTextColor(100); row('Payment',o.payMethod,y,9); y+=6;
+  doc.setTextColor(120); center('Thank you for visiting My Café!',y,8);
+  doc.save('receipt-order-'+o.num+'.pdf');
+  showToast('Receipt PDF downloaded!');
+}
+
+function buildReceipt(o) {
+  const rows=o.items.map(it=>`<div class="r-row"><span>${it.emoji} ${it.name} ×${it.qty}</span><span>${fmt(it.price*it.qty)}</span></div>`).join('');
+  document.getElementById('receipt-content').innerHTML=`
+    <div class="receipt-card">
+      <div class="r-shop">My Café</div>
+      <div class="r-sub">${o.date} · ${o.time} · Order #${o.num}</div>
+      <hr class="r-divider">
+      ${rows}
+      <hr class="r-divider">
+      ${o.discPct>0?`<div class="r-row muted"><span>Discount (${o.discPct}%)</span><span>− ${fmt(o.disc)}</span></div>`:''}
+      <div class="r-row muted"><span>Tax (10%)</span><span>${fmt(o.tax)}</span></div>
+      <div class="r-row total"><span>Total</span><span>${fmt(o.total)}</span></div>
+      <hr class="r-divider">
+      <div class="r-row muted"><span>Payment</span><span>${o.payMethod}</span></div>
+      <div class="r-row muted"><span>Served by</span><span>${o.staffEmoji} ${o.staffName}</span></div>
+      <div class="r-thanks">Thank you for visiting My Café!</div>
+      <div class="r-actions">
+        <button onclick="switchView('pos')">New order</button>
+        <button onclick="switchView('summary')">Summary</button>
+        <button class="print-btn" onclick="downloadReceiptPDF(currentReceipt)">Download PDF</button>
+      </div>
+    </div>`;
+  currentReceipt = o;
+}
+function viewOrderReceipt(idx) { buildReceipt(orderHistory[idx]); switchView('receipt'); }
+
+// ── SUMMARY ────────────────────────────────────────────
+function renderSummary() {
+  const totalRev=orderHistory.reduce((s,o)=>s+o.total,0);
+  const totalOrders=orderHistory.length;
+  const avgOrder=totalOrders?Math.round(totalRev/totalOrders):0;
+  const totalItems=orderHistory.reduce((s,o)=>s+o.items.reduce((a,i)=>a+i.qty,0),0);
+
+  // Per-staff breakdown
+  const staffStats = {};
+  orderHistory.forEach(o => {
+    const key = o.staffId || 'unknown';
+    if (!staffStats[key]) staffStats[key] = {name:o.staffName||'Unknown',emoji:o.staffEmoji||'👤',orders:0,revenue:0};
+    staffStats[key].orders++;
+    staffStats[key].revenue += o.total;
+  });
+
+  const itemSales=getItemSales();
+  const sorted=Object.entries(itemSales).sort((a,b)=>b[1].qty-a[1].qty).slice(0,6);
+  const maxQ=sorted.length?sorted[0][1].qty:1;
+
+  const staffRows = Object.values(staffStats).map(s=>`
+    <tr>
+      <td>${s.emoji} ${s.name}</td>
+      <td style="text-align:center">${s.orders}</td>
+      <td style="text-align:right;font-weight:500;color:#BA7517">${fmt(s.revenue)}</td>
+    </tr>`).join('') || '<tr><td colspan="3" style="color:var(--text-hint)">No data</td></tr>';
+
+  document.getElementById('summary-view').innerHTML = `
+    <div style="padding:18px">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Revenue today</div><div class="stat-val">${fmt(totalRev)}</div><div class="stat-sub">All orders</div></div>
+        <div class="stat-card"><div class="stat-label">Orders</div><div class="stat-val">${totalOrders}</div><div class="stat-sub">Completed</div></div>
+        <div class="stat-card"><div class="stat-label">Avg order</div><div class="stat-val">${fmt(avgOrder)}</div><div class="stat-sub">Per transaction</div></div>
+        <div class="stat-card"><div class="stat-label">Items sold</div><div class="stat-val">${totalItems}</div><div class="stat-sub">Total qty</div></div>
+      </div>
+
+      <div class="section-hdr">Staff performance today</div>
+      <table class="shift-table" style="margin-bottom:18px">
+        <thead><tr><th>Staff</th><th style="text-align:center">Orders</th><th style="text-align:right">Revenue</th></tr></thead>
+        <tbody>${staffRows}</tbody>
+      </table>
+
+      <div class="section-hdr">Top items today</div>
+      <div class="top-items" style="margin-bottom:18px">
+        ${sorted.length ? sorted.map(([name,d])=>`
+          <div class="top-item">
+            <span class="ti-name">${d.emoji} ${name}</span>
+            <div class="ti-bar-wrap"><div class="ti-bar" style="width:${Math.round(d.qty/maxQ*100)}%"></div></div>
+            <span class="ti-qty">${d.qty}×</span>
+            <span class="ti-rev">${fmt(d.rev)}</span>
+          </div>`).join('') : '<div class="no-data">No sales yet</div>'}
+      </div>
+
+      <div class="section-hdr">Order history</div>
+      <div class="order-hist">
+        ${orderHistory.length ? orderHistory.map((o,i)=>`
+          <div class="hist-item" onclick="viewOrderReceipt(${i})">
+            <div class="hi-info">
+              <div class="hi-num">Order #${o.num}</div>
+              <div class="hi-detail">${o.items.reduce((a,i)=>a+i.qty,0)} items · ${o.time} · ${o.payMethod}</div>
+            </div>
+            <span class="hi-staff">${o.staffEmoji||'👤'} ${o.staffName||'—'}</span>
+            <span class="hi-amt">${fmt(o.total)}</span>
+            <span class="hi-badge">Paid</span>
+          </div>`).join('') : '<div class="no-data">No orders yet today</div>'}
+      </div>
+    </div>`;
+}
+
+// ── EXPORT PDF ─────────────────────────────────────────
+function exportSummary() {
+  if (!orderHistory.length) { showToast('No orders to export yet'); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  const PW=210,PH=297,ML=15,MR=15,MT=18,CW=210-15-15; let y=MT;
+  const dateStr=new Date().toLocaleDateString('en-LK',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const genStr='Generated: '+new Date().toLocaleString('en-LK');
+  const itemSales=getItemSales();
+  const sorted=Object.entries(itemSales).sort((a,b)=>b[1].qty-a[1].qty);
+  const totalRev=orderHistory.reduce((s,o)=>s+o.total,0);
+  const totalOrders=orderHistory.length;
+  const avgOrder=totalOrders?Math.round(totalRev/totalOrders):0;
+  const totalItems=orderHistory.reduce((s,o)=>s+o.items.reduce((a,i)=>a+i.qty,0),0);
+
+  // Staff stats
+  const staffStats={};
+  orderHistory.forEach(o=>{
+    const k=o.staffId||'?';
+    if(!staffStats[k]) staffStats[k]={name:o.staffName||'Unknown',orders:0,revenue:0};
+    staffStats[k].orders++; staffStats[k].revenue+=o.total;
+  });
+
+  // Header bar
+  doc.setFillColor(186,117,23); doc.rect(0,0,PW,14,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(255,255,255);
+  doc.text('My Café — Daily Sales Summary',ML,9.5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text(genStr,PW-MR,9.5,{align:'right'});
+
+  y=22; doc.setTextColor(28,26,23); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.text(dateStr,ML,y); y+=8;
+
+  // Stat cards
+  const cardW=(CW-9)/4,cardH=18;
+  [{label:'REVENUE',val:fmt(totalRev)},{label:'ORDERS',val:String(totalOrders)},{label:'AVG ORDER',val:fmt(avgOrder)},{label:'ITEMS SOLD',val:String(totalItems)}]
+  .forEach((s,i)=>{
+    const x=ML+i*(cardW+3);
+    doc.setFillColor(245,243,238); doc.roundedRect(x,y,cardW,cardH,2,2,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(107,104,96); doc.text(s.label,x+4,y+5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(28,26,23); doc.text(s.val,x+4,y+13);
+  }); y+=cardH+10;
+
+  const secTitle=(t)=>{
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(107,104,96);doc.text(t.toUpperCase(),ML,y);y+=4;
+    doc.setDrawColor(200,195,185);doc.setLineWidth(0.3);doc.line(ML,y,ML+CW,y);y+=5;doc.setTextColor(28,26,23);
+  };
+  const tRow=(cols,widths,bold,shade)=>{
+    const rowH=7;
+    if(shade){doc.setFillColor(245,243,238);doc.rect(ML,y-5,CW,rowH,'F');}
+    doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(8.5);
+    let x=ML;
+    cols.forEach((col,i)=>{const align=i===cols.length-1?'right':'left';doc.text(String(col),align==='right'?x+widths[i]:x+2,y,{align});x+=widths[i];});
+    y+=rowH;
+  };
+
+  // Staff table
+  secTitle('Staff Performance');
+  const sW=[CW*0.5,CW*0.25,CW*0.25];
+  tRow(['Staff Member','Orders','Revenue'],sW,true,true);
+  Object.values(staffStats).forEach((s,i)=>tRow([s.name,String(s.orders),fmt(s.revenue)],sW,false,i%2===0));
+  y+=6;
+
+  // Items table
+  if(y>PH-80){doc.addPage();y=MT;}
+  secTitle('Items Sold Today');
+  const iW=[CW*0.55,CW*0.2,CW*0.25];
+  tRow(['Item','Qty','Revenue'],iW,true,true);
+  sorted.forEach(([name,d],i)=>tRow([name,String(d.qty),fmt(d.rev)],iW,false,i%2===0));
+  y+=6;
+
+  // Orders table
+  if(y>PH-80){doc.addPage();y=MT;}
+  secTitle('Order History');
+  const oW=[CW*0.1,CW*0.1,CW*0.32,CW*0.18,CW*0.15,CW*0.15];
+  tRow(['Order','Time','Items','Served by','Payment','Total'],oW,true,true);
+  orderHistory.forEach((o,i)=>{
+    if(y>PH-20){doc.addPage();y=MT;tRow(['Order','Time','Items','Served by','Payment','Total'],oW,true,true);}
+    const items=o.items.map(it=>it.name+' x'+it.qty).join(', ');
+    tRow(['#'+o.num,o.time,items.length>30?items.slice(0,28)+'…':items,o.staffName||'—',o.payMethod,fmt(o.total)],oW,false,i%2===0);
+  });
+
+  // Page footer
+  const pc=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pc;p++){
+    doc.setPage(p);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(160,157,152);
+    doc.text('My Café POS  ·  '+genStr,ML,PH-8);
+    doc.text('Page '+p+' of '+pc,PW-MR,PH-8,{align:'right'});
+  }
+  doc.save('cafe-summary-'+new Date().toISOString().slice(0,10)+'.pdf');
+  showToast('Summary PDF downloaded!');
+}
+
+// ── CLEAR / UTILS ──────────────────────────────────────
+function clearData() {
+  if (!confirm('Clear all orders for today? This cannot be undone.')) return;
+  orderHistory=[]; orderCount=1;
+  sLog=[];try{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem(TODAY_KEY);localStorage.removeItem(COUNTER_KEY);localStorage.removeItem(SLOG_KEY);}catch(e){}
+  document.getElementById('o-num').textContent='Order #001';
+  document.getElementById('tab-receipt').style.display='none';
+  switchView('pos'); showToast('Day cleared');
+}
+
+// ── STOCK VIEW ─────────────────────────────────────────
+function setStockFilter(f){
+  stockFilter=f;
+  document.querySelectorAll('.sf').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sf-'+f).classList.add('active');
+  renderStockView();
+}
+
+let _setStockId=null;
+function openSetModal(id){
+  const it=menu.find(i=>i.id==id);
+  _setStockId=id;
+  document.getElementById('ssm-title').textContent='Set stock — '+it.emoji+' '+it.name;
+  document.getElementById('ssm-sub').textContent='Current stock: '+( stock[id]||0)+' units. Enter the new exact quantity.';
+  document.getElementById('ssm-input').value=stock[id]||0;
+  document.getElementById('set-stock-modal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('ssm-input').select(),80);
+}
+function closeSetModal(e){
+  if(e && e.target!==document.getElementById('set-stock-modal'))return;
+  document.getElementById('set-stock-modal').classList.add('hidden');
+  _setStockId=null;
+}
+function confirmSetStock(){
+  if(_setStockId===null)return;
+  const val=parseInt(document.getElementById('ssm-input').value);
+  if(isNaN(val)||val<0)return showToast('Enter a valid quantity','warn');
+  const old=stock[_setStockId]||0;
+  const delta=val-old;
+  stock[_setStockId]=val;
+  if(delta!==0) logChange(_setStockId,'adjust',delta);
+  saveStock();
+  const it=menu.find(i=>i.id==_setStockId);
+  showToast((delta>=0?'✓ Set +':'✓ Set ')+it.name+' → '+val+' units');
+  document.getElementById('set-stock-modal').classList.add('hidden');
+  _setStockId=null;
+  renderStockView(); renderMenu();
+}
+
+function renderStockView(){
+  const q=(document.getElementById('inv-search')||{value:''}).value.toLowerCase();
+  const total=menu.length;
+  const outC=menu.filter(i=>stockStatus(stock[i.id])==='out').length;
+  const lowC=menu.filter(i=>stockStatus(stock[i.id])==='low').length;
+  const okC=total-outC-lowC;
+  const totalUnits=menu.reduce((s,i)=>s+(stock[i.id]||0),0);
+
+  document.getElementById('inv-stats').innerHTML=`
+    <div class="ist"><div class="ist-icon" style="background:#EAF3DE">✓</div>
+      <div class="ist-body"><div class="ist-lbl">In stock</div><div class="ist-val" style="color:#3B6D11">${okC}</div></div></div>
+    <div class="ist"><div class="ist-icon" style="background:#FEF0E6">⚠</div>
+      <div class="ist-body"><div class="ist-lbl">Low stock</div><div class="ist-val" style="color:#C45A1A">${lowC}</div></div></div>
+    <div class="ist"><div class="ist-icon" style="background:#FCEBEB">✕</div>
+      <div class="ist-body"><div class="ist-lbl">Out of stock</div><div class="ist-val" style="color:#A32D2D">${outC}</div></div></div>
+    <div class="ist"><div class="ist-icon" style="background:#FAEEDA">📦</div>
+      <div class="ist-body"><div class="ist-lbl">Total units</div><div class="ist-val" style="color:#BA7517">${totalUnits}</div></div></div>`;
+
+  // Filter & search
+  let items=[...menu];
+  if(stockFilter==='low') items=items.filter(i=>stockStatus(stock[i.id])==='low');
+  if(stockFilter==='out') items=items.filter(i=>stockStatus(stock[i.id])==='out');
+  if(q) items=items.filter(i=>i.name.toLowerCase().includes(q)||i.cat.toLowerCase().includes(q));
+
+  // Group by category
+  const cats=[...new Set(items.map(i=>i.cat))];
+  const maxStock=Math.max(...menu.map(i=>stock[i.id]||0),1);
+
+  document.getElementById('inv-body').innerHTML = cats.map(cat=>{
+    const catItems=items.filter(i=>i.cat===cat);
+    const cards=catItems.map(i=>{
+      const qty=stock[i.id]||0, st=stockStatus(qty);
+      const barPct=Math.min(100,Math.round((qty/Math.max(maxStock,1))*100));
+      const barCls=st==='ok'?'ibf-ok':st==='low'?'ibf-low':'ibf-out';
+      const qtyCls=st==='ok'?'qty-ok':st==='low'?'qty-low':'qty-out';
+      const pillCls=st==='ok'?'spill-ok':st==='low'?'spill-low':'spill-out';
+      const pillTxt=st==='ok'?'In stock':st==='low'?'Low stock':'Out of stock';
+      const cardCls=st==='ok'?'':'status-'+st;
+
+      // History for this item
+      const logs=sLog.filter(l=>l.id==i.id).slice(0,5);
+      const histHTML=logs.length ? logs.map(l=>{
+        const dotCls='ht-dot-'+l.type;
+        const dSign=l.delta>0?'+':'';
+        const dCls=l.delta<0?'ht-delta-neg':'ht-delta-pos';
+        const desc=l.type==='sale'?'Sold':l.type==='restock'?'Restocked':'Adjusted';
+        return `<div class="ht-row">
+          <div class="ht-dot ${dotCls}"></div>
+          <span class="ht-time">${l.time}</span>
+          <span class="ht-desc">${desc}</span>
+          <span class="ht-delta ${dCls}">${dSign}${l.delta}</span>
+          <span style="font-size:10px;color:#A09D98;margin-left:4px">→ ${l.qty}</span>
+        </div>`;
+      }).join('') : '<div class="no-hist">No changes today</div>';
+
+      return `<div class="inv-card ${cardCls}">
+        <div class="inv-card-top">
+          <div class="inv-emoji">${i.emoji}</div>
+          <div class="inv-meta">
+            <div class="inv-name">${i.name}</div>
+            <div class="inv-cat">${i.cat} · LKR ${i.price.toLocaleString()}</div>
+          </div>
+          <div class="inv-status"><span class="spill ${pillCls}">${pillTxt}</span></div>
+        </div>
+        <div class="inv-bar-row">
+          <div class="inv-bar-track"><div class="inv-bar-fill ${barCls}" style="width:${barPct}%"></div></div>
+          <span class="inv-qty ${qtyCls}">${qty}</span>
+        </div>
+        <div class="inv-controls">
+          <button class="icc-btn minus" onclick="adjStock(${i.id},-1)" title="Remove 1">−</button>
+          <input class="icc-input" id="sc-${i.id}" type="number" value="10" min="1" max="9999" placeholder="Qty">
+          <button class="icc-btn plus" onclick="restockItem(${i.id})" title="Add stock">+</button>
+          <button class="icc-restock" onclick="restockItem(${i.id})">+ Restock</button>
+          <button class="icc-set" onclick="openSetModal(${i.id})">Set</button>
+        </div>
+        <div class="inv-history">
+          <div class="hist-title">Today's changes</div>
+          <div class="hist-timeline">${histHTML}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="cat-section"><div class="cat-section-hdr">${cat} <span style="color:#A09D98;font-weight:400">(${catItems.length} items)</span></div><div class="inv-grid">${cards}</div></div>`;
+  }).join('') || '<div style="padding:40px;text-align:center;color:#A09D98;font-size:13px">No items match your filter</div>';
+}
+
+function restockItem(id){
+  const inp=document.getElementById('sc-'+id);
+  const amt=parseInt(inp.value)||10;
+  if(amt<=0) return showToast('Enter a valid amount','warn');
+  stock[id]=(stock[id]||0)+amt;
+  logChange(id,'restock',+amt);
+  saveStock();
+  const it=menu.find(i=>i.id==id);
+  showToast('✓ +'+amt+' '+it.name+' restocked');
+  renderStockView(); renderMenu();
+}
+
+function adjStock(id,delta){
+  const next=(stock[id]||0)+delta;
+  if(next<0) return showToast('Stock cannot go below 0','warn');
+  stock[id]=next;
+  logChange(id,'adjust',delta);
+  saveStock();
+  renderStockView(); renderMenu();
+}
+
+function showToast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show';
+  if(type==='warn') t.classList.add('warn');
+  if(type==='err')  t.classList.add('err');
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── INIT ───────────────────────────────────────────────
+setDateBadge();
+renderLoginGrid();
+renderCats();
+renderMenu();
+if (orderHistory.length) {
+  document.getElementById('tab-receipt').style.display='';
+  document.getElementById('o-num').textContent='Order #'+String(orderCount).padStart(3,'0');
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Set Stock Modal -->
+<div class="modal-overlay hidden" id="set-stock-modal" onclick="closeSetModal(event)">
+  <div class="modal-box">
+    <h3 id="ssm-title">Set Stock</h3>
+    <p id="ssm-sub">Enter the exact stock quantity for this item.</p>
+    <div class="modal-input-row">
+      <label>New quantity</label>
+      <input type="number" id="ssm-input" min="0" max="9999" value="50">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeSetModal()">Cancel</button>
+      <button class="modal-confirm" onclick="confirmSetStock()">Set stock</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
